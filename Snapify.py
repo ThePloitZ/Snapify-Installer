@@ -1,11 +1,10 @@
-import uiautomator2 as u2
-from pystyle import *
 import platform
 import os
 import subprocess
-from time import sleep
 from pathlib import Path
 import shutil
+import keyboard  # For capturing keyboard events
+from pystyle import Colorate, Colors
 
 # Initialize clear command as a global variable
 clear = ""
@@ -20,34 +19,30 @@ banner = """
 ⠀⠀⠀⠈⠙⢻⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡟⠋⠁⠀⠀
 ⠀⠀⠀⣀⣴⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣦⣀⠀⠀
 ⢠⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⡄
-⠘⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠃
+⠘⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠃
 ⠀⠀⠉⠉⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠉⠉⠀⠀
 ⠀⠀⠀⠀⠈⠛⠛⠋⠙⠿⣿⣿⣿⣿⣿⣿⠿⠋⠙⠛⠛⠁⠀⠀⠀⠀
 """
 
+menu_items = ["[1] Android", "[2] Emulator", "[3] WEB", "[4] Exit"]
+
 
 def system_is():
     global clear
-    # Detects the OS of the system it is running on
     os_type = platform.system()
 
     if os_type == "Windows":
-        print(Colorate.Color(Colors.cyan, "Running on Windows", True))
         clear = "cls"
     elif os_type == "Linux":
-        print(Colorate.Color(Colors.orange, "Running on Linux", True))
         clear = "clear"
     elif os_type == "Darwin":
-        print(Colorate.Color(Colors.white, "Running on macOS", True))
         clear = "clear"
     else:
         print(f"What your PC smokin?\nGet a different OS!")
 
 
 def adb_here():
-    # Check if adb is installed
     try:
-        # Attempt to run adb version to verify installation
         result = subprocess.run(
             ["adb", "version"], capture_output=True, text=True, check=True
         )
@@ -74,11 +69,10 @@ def install_adb():
                 Colors.yellow, "Attempting to install ADB on Windows...", True
             )
         )
-        # Download the latest adb installer script from GitHub (you can customize the link)
         url = "https://dl.google.com/android/repository/platform-tools_r31.0.3-windows.zip"
         zip_path = Path("platform-tools.zip")
         extract_to = Path("platform-tools")
-        # Download adb
+
         subprocess.run(
             [
                 "powershell",
@@ -87,7 +81,6 @@ def install_adb():
             ],
             check=True,
         )
-        # Unzip
         subprocess.run(
             [
                 "powershell",
@@ -96,30 +89,23 @@ def install_adb():
             ],
             check=True,
         )
-        # Remove the zip file
         zip_path.unlink()
 
-        # Move contents from platform-tools to CWD
         platform_tools_path = extract_to / "platform-tools"
         for item in platform_tools_path.iterdir():
             if item.is_file() or item.is_dir():
                 shutil.move(str(item), str(Path.cwd() / item.name))
 
-        # Add platform-tools to PATH for current session
         os.environ["PATH"] += os.pathsep + str(Path.cwd() / "platform-tools")
-
-        # Clean up
         shutil.rmtree(extract_to)
 
     elif os_type == "Linux":
         print(
             Colorate.Color(Colors.yellow, "Attempting to install ADB on Linux...", True)
         )
-        # Update package list and install adb
         subprocess.run(["sudo", "apt-get", "update"], check=True)
         subprocess.run(["sudo", "apt-get", "install", "-y", "adb"], check=True)
 
-        # Add adb to PATH if needed
         adb_path = subprocess.run(
             ["which", "adb"], capture_output=True, text=True, check=True
         ).stdout.strip()
@@ -130,10 +116,8 @@ def install_adb():
         print(
             Colorate.Color(Colors.yellow, "Attempting to install ADB on macOS...", True)
         )
-        # Install adb using Homebrew
         subprocess.run(["brew", "install", "android-platform-tools"], check=True)
 
-        # Add adb to PATH if needed
         adb_path = subprocess.run(
             ["which", "adb"], capture_output=True, text=True, check=True
         ).stdout.strip()
@@ -148,7 +132,6 @@ def install_adb():
         )
         return
 
-    # Verify adb installation
     try:
         result = subprocess.run(
             ["adb", "version"], capture_output=True, text=True, check=True
@@ -165,7 +148,48 @@ def install_adb():
         )
 
 
+def print_menu(selected_index):
+    os.system(clear)
+    print(Colorate.Color(Colors.yellow, banner, True))
+    for index, item in enumerate(menu_items):
+        if index == selected_index:
+            print(Colorate.Color(Colors.green, item, True))
+        else:
+            print(Colorate.Color(Colors.yellow, item, True))
+
+
+def handle_choice(index):
+    if index == 0:
+        print("Android option selected.")
+    elif index == 1:
+        print("Emulator option selected.")
+    elif index == 2:
+        print("WEB option selected.")
+    elif index == 3:
+        print("Exiting...")
+        exit()
+
+
+def menu_navigation():
+    selected_index = 0
+    while True:
+        print_menu(selected_index)
+        event = keyboard.read_event()
+
+        if event.name == "up" and selected_index > 0:
+            selected_index -= 1
+        elif event.name == "down" and selected_index < len(menu_items) - 1:
+            selected_index += 1
+        elif event.name == "enter":
+            handle_choice(selected_index)
+        elif event.name == "esc":
+            print("Exiting...")
+            exit()
+
+
 system_is()
 os.system(clear)
 print(Colorate.Color(Colors.yellow, banner, True))
 adb_here()
+
+menu_navigation()
