@@ -5,6 +5,8 @@ from pathlib import Path
 import shutil
 import keyboard  # For capturing keyboard events
 from pystyle import Colorate, Colors
+import requests
+import json
 
 # Initialize clear command as a global variable
 clear = ""
@@ -167,6 +169,8 @@ def handle_choice(index):
         print("WEB option selected.")
     elif index == 3:
         print("Exiting...")
+        KeyboardInterrupt()
+        keyboard.press("esc")
         exit()
 
 

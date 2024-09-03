@@ -1,0 +1,9 @@
+{
+    "snapify": {
+        "camera_find": "com.snapchat.android:id/ngs_camera_icon_container",
+        "camera_button": "com.snapchat.android:id/camera_capture_button",
+        "send_to": "com.snapchat.android:id/send_btn_layout",
+        "last_snap_id": "com.snapchat.android:id/send_to_last_snap",
+        "send": "com.snapchat.android:id/send_to_send_button"
+    }
+}
